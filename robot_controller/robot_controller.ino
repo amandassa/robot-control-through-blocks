@@ -5,6 +5,10 @@
 //Declaração pins do bluetooth
 const int PIN_RX = 10;
 const int PIN_TX = 11;
+// // MOD:
+// const int PIN_TX = 10;
+// const int PIN_RX = 11;
+
 
 const int arrayLength = 200;
 const int infoLength = 2;
@@ -29,7 +33,7 @@ const int SENSOR_DISTANCIA = 5;
 const char stopSimbol = '$';
 
 
-const int TEMPO_ESPERA = 0; //declaracao do intervalo de 1 segundo entre os sentidos de rotacao do motor
+const int TEMPO_ESPERA = 1000; //declaracao do intervalo de 1 segundo entre os sentidos de rotacao do motor
 
 const int TEMPO_RAMPA_CURVE1 = 1500; //declaracao do intervalo de 30 ms para as rampas de aceleracao e desaceleracao
 const int TEMPO_RAMPA_CURVE2 = 3700; //declaracao do intervalo de 30 ms para as rampas de aceleracao e desaceleracao
@@ -41,11 +45,11 @@ const int TEMPO_RAMPA_MOVE1 = 2000;
 //-------variaveis
 
 int i = 0; //declaracao da variavel para as rampas
-byte moviments[arrayLength][infoLength];
-byte ifMoviments[2][arrayLength][infoLength];
+char moviments[arrayLength][infoLength];
+char ifMoviments[2][arrayLength][infoLength];
 int state = 0;
 int numInfo = 0;
-byte moviment[2];
+char moviment[2];
 boolean canMove = true;
 boolean insideIfBlock = false;
 boolean insideElseBlock = false;
@@ -75,7 +79,7 @@ void setup() {
   digitalWrite(PINO_ENB, LOW);
 
   Serial.begin(9600);
-  Serial.println("Teste");
+  Serial.println("Setup");
   serialHC08.begin(9600);
 
   cleanMoviments();
@@ -92,59 +96,59 @@ void loop() {
    
 
   if(state == 0){
-
- 
-        if (serialHC08.available()) {
-            byte value = serialHC08.read();
-            if(value != 1 ){
-              numInfo++;
-              //byte robotVelocity = serialHC08.read();
-               Serial.println((char) value);
-              //Setar direção e velocidade
-              if(numInfo == 1){
-                moviment[0] = value;
-              }
-              else{
-                moviment[1] = value;
-                //Serial.println(numInfo);
-                //Serial.print("insideIfBlock:");
-                //Serial.println(insideIfBlock);
-                if((char) value == 'i'){
-                  insideIfBlock = !insideIfBlock;
-                  //Serial.println("reconheceu o i");
-                }
-                else if((char) value == 'e'){
-                  insideElseBlock = !insideElseBlock;
-                }
-                else if(insideIfBlock){
-                  addIfBlock(moviment, 0);
-                  //Serial.print("ADICIONOU NO IF");
-                }
-                else if(insideElseBlock){
-                  addIfBlock(moviment, 1);
-                  //Serial.print("ADICIONOU NO ELSE");
-                }
-                else{
-                  addMoviment(moviment);
-                }
-                
-                numInfo = 0;
-              }
+    if (serialHC08.available()) {   // nao cai no if?
+      Serial.println("Serial disponivel, 96");        
+      char value = serialHC08.read();
+      Serial.println(value);
+      if(value != 1 ){
+        numInfo++;
+        //byte robotVelocity = serialHC08.read();
+        //Setar direção e velocidade
+        if(numInfo == 1){
+          moviment[0] = value;
+        }
+        else{
+          moviment[1] = value;
+          Serial.println(numInfo);
+          Serial.print("insideIfBlock:");
+          Serial.println(insideIfBlock);
+          if(value == 'i'){
+            insideIfBlock = !insideIfBlock;
+            Serial.println("reconheceu o i");
+          }
+          else if(value == 'e'){
+            insideElseBlock = !insideElseBlock;
+          }
+          else if(insideIfBlock){
+            addIfBlock(moviment, 0);
+            Serial.print("ADICIONOU NO IF");
+          }
+          else if(insideElseBlock){
+            addIfBlock(moviment, 1);
+            Serial.print("ADICIONOU NO ELSE");
+          }
+          else{
+            addMoviment(moviment);
+          }
           
-              if((char) value == stopSimbol){
-                state = 1;
-                numInfo = 0;
-              }
- 
-            }
-           //Serial.println((int) robotVelocity);
+          numInfo = 0;
+        }
+    
+        if(value == stopSimbol){
+          state = 1;
+          numInfo = 0;
+          Serial.println("recebimento de $$ stop");
+        }
 
-        
       }
+      //  Serial.println((int) robotVelocity);
+      else {
+        Serial.println("SERIAL NÃO DISPONÍVEL");
+      }
+    }
   }
   else if( state == 1){
-
-
+    Serial.println("Estado 1 Movimentação");
 //--------------------------ALGORITMO DE MOVIMENTAÇÃO
 
     // put your main code here, to run repeatedly:
@@ -156,16 +160,16 @@ void loop() {
  
     for(int j =0; j< arrayLength; j++ ){
 
-
+        Serial.println("Array de movimentação");        
         
-        byte info[2] = {moviments[j][0], moviments[j][1]};
+        char info[2] = {moviments[j][0], moviments[j][1]};
         Serial.print("Direction:");
         Serial.println((char) info[0]);
         Serial.print("Velocity:");
         Serial.println((char) info[1]);
 
         if (serialHC08.available()){
-           byte value = serialHC08.read();
+           char value = serialHC08.read();
            if(value == 1 ){
               break;
            }
@@ -187,7 +191,7 @@ void loop() {
             
           }
 
-          //Serial.println("ENTROU");
+          Serial.println("ENTROU");
           moveRobot(info[0],info[1], j , false);
 
           if(!canMove){
@@ -348,7 +352,7 @@ void addIfBlock(byte* info, int pos){
 }
 
 void addMoviment(byte* info){
-//Serial.println("Added");
+  Serial.println("Added");
 
    for(int j =0; j< sizeof(moviments); j++){
 
