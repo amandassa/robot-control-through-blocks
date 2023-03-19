@@ -15,7 +15,7 @@ void setup() {
   pinMode(BUZZER, OUTPUT);
   pinMode(POTENTIOMETER, INPUT);
   Serial.begin(9600);
-  Serial.begin(9600);
+  Serial1.begin(9600);
   SPI.begin();                                                  // Init SPI bus
   mfrc522.PCD_Init();                                              // Init MFRC522 card
   Serial.println(F("Read personal data on a MIFARE PICC:"));    //shows in serial that it is ready to read
@@ -30,7 +30,7 @@ void loop() {
   //Serial.println(digitalRead(POTENTIOMETER));
   if(digitalRead(POTENTIOMETER) == 1){
     byte turnOff = 1;
-    Serial.write(turnOff);
+    Serial1.write(turnOff);
     
   }
 
@@ -94,8 +94,9 @@ void loop() {
   {
     if (buffer1[i] != 32)
     {
-      Serial.write(buffer1[i]);
-      Serial.write(buffer1[i]); //Send direction to robot
+      Serial1.write(buffer1[i]);
+      Serial1.write(buffer1[i]); //Send direction to robot
+      Serial.println((char) buffer1[i]);
       digitalWrite(BUZZER, HIGH);
       delay(200);
       digitalWrite(BUZZER, LOW);
@@ -124,8 +125,8 @@ void loop() {
 
   //PRINT LAST NAME
   for (uint8_t i = 0; i < 16; i++) {
-    Serial.write(buffer2[i] );
-   // Serial.write(buffer2[i]); //Send velocity to robot
+    Serial1.write(buffer2[i]);
+   // Serial1.write(buffer2[i]); //Send velocity to robot
   }
 
 
@@ -140,13 +141,14 @@ void loop() {
 
 
   //Send direction by serial
-  //if (Serial.available()) {
-    //Serial.write(Serial.read());
-  //}
+  // if (Serial.available()) {
+  //   Serial1.write(Serial.read());
+  //   Serial.println("ENVIADO");
+  // }
 
 //  if (Serial.available()) {
 
-    //Serial.write(Serial.read());
-  //}
+//     Serial1.write(Serial.read());
+//   }
 
 }
