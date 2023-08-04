@@ -1,6 +1,12 @@
-
 #include <SoftwareSerial.h>
 
+/**
+ * oo: loop
+ * ii: if
+ * ee: else
+ * cc: fim da condicional
+ * 
+ **/
 
 //Declaração pins do bluetooth
 const int PIN_RX = 10;
@@ -52,6 +58,8 @@ boolean insideElseBlock = false;
 boolean ifExecuted = false;
 boolean elseExecuted = false;
 
+const nloop = 0;    // numero de iterações
+
 void setup() {
     //configuração dos pinos como saida
   pinMode(PINO_ENA, OUTPUT); 
@@ -99,35 +107,42 @@ void loop() {
             if(value != 1 ){
               numInfo++;
               //byte robotVelocity = serialHC08.read();
-               Serial.println((char) value);
-              //Setar direção e velocidade
+//              Serial.print("Caracter:::::");    //char i lido ok
+//              Serial.println((char) value);
+              //Setar direção e velocidade 
               if(numInfo == 1){
                 moviment[0] = value;
               }
               else{
                 moviment[1] = value;
-                //Serial.println(numInfo);
-                //Serial.print("insideIfBlock:");
-                //Serial.println(insideIfBlock);
+//                Serial.println(numInfo);
+//                Serial.print("insideIfBlock:");
+//                Serial.println(insideIfBlock);
                 if((char) value == 'i'){
-                  insideIfBlock = !insideIfBlock;
-                  //Serial.println("reconheceu o i");
+                  insideIfBlock = true;
+                  ifExecuted = false;
+                  Serial.println("reconheceu o i");
                 }
                 else if((char) value == 'e'){
-                  insideElseBlock = !insideElseBlock;
+                  insideElseBlock = true;
+                  elseExecuted = false;
                 }
                 else if(insideIfBlock){
                   addIfBlock(moviment, 0);
-                  //Serial.print("ADICIONOU NO IF");
+                  Serial.print("ADICIONOU NO IF");
                 }
                 else if(insideElseBlock){
                   addIfBlock(moviment, 1);
-                  //Serial.print("ADICIONOU NO ELSE");
+                  Serial.print("ADICIONOU NO ELSE");
                 }
                 else{
+                  if ((char) value == 'o'){
+                    Serial.print("#TODO loop");
+                  }
                   addMoviment(moviment);
+                  Serial.println("ADICIONOU MOVIMENTO");
                 }
-                
+                Serial.println((char) value);
                 numInfo = 0;
               }
           
@@ -173,61 +188,61 @@ void loop() {
   
       if((char) info[0] != stopSimbol){
 
-          //Loop do robô
-          if((char) info[0] == 'o'){ //corrigir quandop encontrar obstáculo parar quando nao tiver bloco if
-
+          //Loop do robô (for)
+          if((char) info[0] == 'o'){ 
+            
             if(startedLoop){
-              j = loopPosition;
+              j = loopPosition;     // assim ele repete apenas o array de movimentos ja existente sem parar
               Serial.println("Salvou o index");
             }
             else{
               loopPosition = j;
+              /// TODO verificar qtd de nloop restante para limitar as iteracoes
               startedLoop = true;
             }
-            
+            break;
+          }
+          if((char) info[0] == '1'){ 
+            nloop++;
+            Serial.println("add iteraçao");
           }
 
           //Serial.println("ENTROU");
           moveRobot(info[0],info[1], j , false);
 
           if(!canMove){
-          Serial.println("Entrou no canMove");
-          if( (char) ifMoviments[0][j][0] == stopSimbol){
-            break;
+            Serial.println("Entrou no canMove");  // entra aqui ou seja canmove == false
+            if( (char) ifMoviments[0][j][0] == stopSimbol){
+              Serial.println("BREAK? quer dizer que tem $$ no if");
+              break;
           }
-          if(!ifExecuted){
+          
+          if(!ifExecuted){    // ifExecuted == false
             canMove = true;
+            executeConditionalBlock(0);
             ifExecuted = true;
             Serial.println("Block do if chamado");
-            executeConditionalBlock(0);
-            if(!canMove){
-              executeConditionalBlock(1);
-              ifExecuted = false;
-            }
+//            if(!canMove){
+//              executeConditionalBlock(1);
+//              ifExecuted = false;
+//            }
           }else{            
             Serial.println("Block do else chamado");
             if(elseExecuted){
               break;
+            }else{
+              executeConditionalBlock(1);
+              elseExecuted = true;
             }
-            executeConditionalBlock(1);
-            elseExecuted = true;
-
           }
-          
-          
         }
-
-       
       }
       else {
-
             setInitialState();
             canMove = true;
             ifExecuted = false;
             break;
       }
-    
-      
     }
       setInitialState();
       canMove = true;
@@ -242,20 +257,20 @@ void loop() {
 
 
 void printArrayMoviment(){
-    for(int j =0; j< arrayLength; j++){
+  for(int j =0; j< arrayLength; j++){
 
-   if(moviments[j][0] != stopSimbol){
+    if(moviments[j][0] != stopSimbol){
       Serial.print("M1: ");
       Serial.print((char)moviments[j][0]);
       Serial.print(", ");
       Serial.print("M2: ");
       Serial.println((char) moviments[j][1]);
-   }
-   else{
-    return;
-   }
+    }
+    else{
+      return;
+    }
   }
-  
+
 }
 
 void setInitialState(){
@@ -290,14 +305,13 @@ void cleanMoviments(){
 
 
 void moveRobot(byte direct, byte velocity, int j, boolean isIfBlock){
-
           if ((char) direct == 'f') {
 
-            digitalWrite(PINO_IN1A, LOW);
+            digitalWrite(PINO_IN1A, LOW);               
             digitalWrite(PINO_IN1B, HIGH);
             digitalWrite(PINO_IN2A, HIGH);
             digitalWrite(PINO_IN2B, LOW);
-            canMove = robotAcelerationMove((char)velocity, j , isIfBlock);
+            canMove = robotAcelerationMove((char)velocity, j , isIfBlock);  // AQUI o canMove vai p/ falso n sei pq D=
             
             
             
@@ -390,9 +404,9 @@ void robotAcelerationCurve(char velocity){
 
 }
 
-
+// type: 0 - if 1 - else
 void executeConditionalBlock(int type){
-
+  Serial.println("Executando bloco condicional");
       for(int j =0; j< arrayLength; j++ ){
       
         byte info[2] = { ifMoviments[type][j][0],  ifMoviments[type][j][1]};
@@ -414,7 +428,9 @@ void executeConditionalBlock(int type){
 }
 
 
-
+/**
+ * 
+ */
 boolean robotAcelerationMove(char velocity, int index, boolean isIfBlock){
 
      int lastTimeRobotMoviment = 0;
@@ -427,10 +443,14 @@ boolean robotAcelerationMove(char velocity, int index, boolean isIfBlock){
      do{
 
            if(digitalRead(SENSOR_DISTANCIA) == LOW && !(index == 0 && isIfBlock)){ //Encontrou obstáculo
-             Serial.println("Encontrou obstaculo");
-              analogWrite(PINO_ENA, 0);
-              analogWrite(PINO_ENB, 0);
-              return false;
+              Serial.println("Encontrou obstaculo");
+//              // proxs linhas param o robo.
+//              analogWrite(PINO_ENA, 0);
+//              analogWrite(PINO_ENB, 0);
+//              return false;     // RETORNA FALSO SE ENCONTROU OBSTACULO!!! ai o canMove == false
+              // mas agora o robo deve se mover mesmo se encontrar obstaculo
+              /// entao deva acabar com esse bloco - quando encontrar obstaculo ele deve mesmo é ver se tem IF.
+//              ifExecuted = false;
            }
            previusTime = millis();
      }while((previusTime - lastTimeRobotMoviment  ) <=  delayTime);
