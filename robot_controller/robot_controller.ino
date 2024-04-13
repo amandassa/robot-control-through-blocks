@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <SoftwareSerial.h>
 
 /**
@@ -48,7 +49,8 @@ const int TEMPO_RAMPA_MOVE1 = 2000;
 
 int i = 0; //declaracao da variavel para as rampas
 byte moviments[arrayLength][infoLength];
-byte ifMoviments[2][arrayLength][infoLength];
+// byte ifMoviments[2][arrayLength][infoLength];
+byte ifMoviments[infoLength][arrayLength];
 int state = 0;
 int numInfo = 0;
 byte moviment[2];
@@ -58,7 +60,7 @@ boolean insideElseBlock = false;
 boolean ifExecuted = false;
 boolean elseExecuted = false;
 
-const nloop = 0;    // numero de iterações
+int nloop = 0;    // numero de iterações
 
 void setup() {
     //configuração dos pinos como saida
@@ -212,7 +214,7 @@ void loop() {
 
           if(!canMove){
             Serial.println("Entrou no canMove");  // entra aqui ou seja canmove == false
-            if( (char) ifMoviments[0][j][0] == stopSimbol){
+            if( (char) ifMoviments[0][j] == stopSimbol){
               Serial.println("BREAK? quer dizer que tem $$ no if");
               break;
           }
@@ -294,9 +296,11 @@ void cleanMoviments(){
 
   for(int p=0; p< 2 ; p++){
     for(int j =0; j< arrayLength; j++){
-   
-      ifMoviments[p][j][0] = stopSimbol;
-      ifMoviments[p][j][1] = stopSimbol;
+      // teste depois sem isso
+      ifMoviments[p][j] = stopSimbol;
+      ifMoviments[p][j] = stopSimbol;
+      // ifMoviments[p][j][0] = stopSimbol;
+      // ifMoviments[p][j][1] = stopSimbol;
     }
   }
   
@@ -350,10 +354,10 @@ void addIfBlock(byte* info, int pos){
 
      for(int j =0; j< arrayLength; j++){
 
-      if(ifMoviments[pos][j][0] == stopSimbol){
+      if(ifMoviments[pos][j] == stopSimbol){
         
-        ifMoviments[pos][j][0] = info[0];
-        ifMoviments[pos][j][1] = info[1];
+        ifMoviments[pos][j] = info[0];
+        ifMoviments[pos][j] = info[1];
         break;
       }   
     
@@ -409,7 +413,7 @@ void executeConditionalBlock(int type){
   Serial.println("Executando bloco condicional");
       for(int j =0; j< arrayLength; j++ ){
       
-        byte info[2] = { ifMoviments[type][j][0],  ifMoviments[type][j][1]};
+        byte info[2] = { ifMoviments[type][j],  ifMoviments[type][j]};
   
         if((char) info[0] != stopSimbol){
           moveRobot(info[0], info[1], j, true);
